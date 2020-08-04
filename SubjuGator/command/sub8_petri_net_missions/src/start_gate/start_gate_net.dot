@@ -5,7 +5,7 @@ digraph G
   transition_0 [shape="box", pos="12.5,102!"];
 
   // A place to get the next Points of Interest(POIs) from the POI server
-  get_next_pois[shape="oval", xlabel="POIArray; void", pos="15, 100!"];
+  get_next_pois[shape="oval", xlabel="POI_2; void", pos="15, 100!"];
   transition_0 -> get_next_pois[xlabel="void"];
 
   // A place to get the start get timeout from rosparam server
@@ -21,17 +21,17 @@ digraph G
 
   // consult with ros nodes to locate the posts of the start gate,
   //  return confidence if found or timeout
-  post_0[shape="oval", xlabel="PoseConf; POIDuration", pos="7, 95!"];
+  post_0[shape="oval", xlabel="PoseConf; PoiDuration", pos="7, 95!"];
   start -> post_0[
-      xlabel="POIDuration(get_next_pois->pois[0], *get_timeout)"];
+      xlabel="{get_next_pois->pois[0], *get_timeout}"];
   post_0 -> tried;
-  post_1[shape="oval", xlabel="PoseConf; POIDuration", pos="13, 95!"];
+  post_1[shape="oval", xlabel="PoseConf; PoiDuration", pos="13, 95!"];
   start -> post_1[
-      xlabel="POIDuration(get_next_pois->pois[1], *get_timeout)"];
+      xlabel="{get_next_pois->pois[1], *get_timeout}"];
   post_1 -> tried;
 
   // utilize thread safe c++ pose editor library to command a move of the submarine
-  approach_pois[shape="oval", xlabel="void; POIArray", pos="0, 95!"];
+  approach_pois[shape="oval", xlabel="void; POI_2", pos="0, 95!"];
   start -> approach_pois[xlabel="*get_next_pois"];
   approach_pois -> tried;
 
@@ -41,8 +41,8 @@ digraph G
   try_again -> get_next_pois[xlabel="void"];
 
   // place to determine if we have succeded in the mission or need to try again
-  success[shape="oval" xlabel="PoseSuccess; PoseConfTuple", pos="10, 92!"];
-  tried -> success[xlabel="PoseConfTuple(*post_0, *post_1)"];
+  success[shape="oval" xlabel="PoseSuccess; PoseConf_2", pos="10, 92!"];
+  tried -> success[xlabel="{{*post_0, *post_1}}"];
   success -> proceed[xlabel="success->success"];
   success -> try_again[xlabel="!success->success"];
 

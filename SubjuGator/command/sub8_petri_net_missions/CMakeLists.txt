@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(sub8_petri_net_missions)
+project(sub8_petri_net_missions CXX)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -106,7 +106,7 @@ find_package(Boost REQUIRED COMPONENTS thread)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES sub8_missions2
+  LIBRARIES ${PROJECT_NAME}_start_gate_net
   CATKIN_DEPENDS roscpp rospy std_msgs mil_poi mil_msgs geometry_msgs
   DEPENDS system_lib pthread
 )
@@ -118,6 +118,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 set(PETRI_NET_DIR ${CATKIN_DEVEL_PREFIX}/share/${PROJECT_NAME}/petri_nets)
+add_custom_target(${PROJECT_NAME}_petri_net_dir
+                  COMMAND mkdir -p ${PETRI_NET_DIR}
+)
 
 include_directories(
   include
@@ -127,7 +130,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
+# add_library(${PROJECT_NAME
 #   src/${PROJECT_NAME}/sub8_missions2.cpp
 # )
 
@@ -136,51 +139,49 @@ include_directories(
 # With catkin_make all packages are built within a single CMake context
 # The recommended prefix ensures that target names across packages don't collide
 
-add_custom_target(${PROJECT_NAME}_petri_net_dir
-COMMAND mkdir -p ${PETRI_NET_DIR})
+set(MISSION_DIR ${PETRI_NET_DIR}/start_gate)
+add_custom_target(${PROJECT_NAME}_start_gate_dir
+                  DEPENDS ${PROJECT_NAME}_petri_net_dir
+                  COMMAND mkdir -p ${MISSION_DIR}
+)
 
-set(${PROJECT_NAME}_start_gate_net_cpp
-    ${PETRI_NET_DIR}/start_gate_net.cpp)
 
-set(${PROJECT_NAME}_start_gate_state_graph_dot
-    ${PETRI_NET_DIR}/start_gate_state_graph.dot)
 
-add_executable(${PROJECT_NAME}_start_gate
-               src/start_gate/start_gate.cpp
-               ${PROJECT_NAME}_start_gate_net_cpp)
-add_dependencies(${PROJECT_NAME}_start_gate
-               ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+# Start Gate Missions
+
+add_executable(${PROJECT_NAME}_start_gate src/start_gate/start_gate.cpp
+                                          ${MISSION_DIR}/start_gate_net.cpp)
 set_target_properties(${PROJECT_NAME}_start_gate
-               PROPERTIES COMPILE_FLAGS "-std=c++14 -pthread -Wall")
-
+                      PROPERTIES
+                      COMPILE_FLAGS "-std=c++14 -pthread -Wall")
+target_link_libraries(${PROJECT_NAME}_start_gate
+                      ${catkin_LIBRARIES} ${boost_LIBRARIES})
 # source fiels that infomr the petri net
 get_filename_component(START_GATE_NET_DOT
                        "${CMAKE_CURRENT_SOURCE_DIR}/src/start_gate/start_gate_net.dot"
                        ABSOLUTE)
 get_filename_component(START_GATE_HPP
-                       "${CMAKE_CURRENT_SOURCE_DIR}/include/sub8_missions2/start_gate.hpp"
+                       "${CMAKE_CURRENT_SOURCE_DIR}/include/sub8_petri_net_missions/start_gate.hpp"
                        ABSOLUTE)
 # auto generated files for the petri net interpreter to write
 get_filename_component(START_GATE_NET_CPP
-                       "${PETRI_NET_DIR}/start_gate_net.cpp"
-                       ABSOLUTE)
+                       "${MISSION_DIR}/start_gate_net.cpp"
+                        ABSOLUTE)
 get_filename_component(START_GATE_NET_HPP
-                       "${PETRI_NET_DIR}/start_gate_net.hpp"
+                       "${MISSION_DIR}/start_gate_net.hpp"
                        ABSOLUTE)
 
-add_custom_command(OUTPUT ${PROJECT_NAME}_start_gate_net_cpp
-                          ${PROJECT_NAME}_start_gate_net_hpp
-                          ${PROJECT_NAME}_start_gate_state_graph_dot
-                   DEPENDS src/start_gate/start_gate_net.dot ${PROJECT_NAME}_petri_net_dir
-COMMAND   make_petri_net -dot ${START_GATE_NET_DOT} -header ${START_GATE_NET_HPP} -source ${START_GATE_NET_CPP} -types ${START_GATE_HPP} -os linux_cpp --debug print --state_graph_type dot --state_graph_output ${PETRI_NET_DIR}/start_gate_state_graph.dot)
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_start_gate
-  ${catkin_LIBRARIES} ${boost_LIBRARIES}
-)
+add_custom_command(OUTPUT ${MISSION_DIR}/start_gate_net.cpp
+                          ${MISSION_DIR}/start_gate_net.hpp
+                          ${MISSION_DIR}/start_gate_state_graph.dot
+                   DEPENDS src/start_gate/start_gate_net.dot
+                           ${PROJECT_NAME}_start_gate_dir
+                           ${START_GATE_HPP}
+COMMAND   make_petri_net -dot ${START_GATE_NET_DOT} -header ${START_GATE_NET_HPP} -source ${START_GATE_NET_CPP} -types ${START_GATE_HPP} -os linux_cpp --state_graph_type dot --state_graph_output ${MISSION_DIR}/start_gate_state_graph.dot)
 
 unset(PETRI_NET_DIR)
+unset(MISSION_DIR)
 
 
 #############
