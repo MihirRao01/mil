@@ -154,7 +154,7 @@ add_executable(${PROJECT_NAME}_start_gate src/start_gate/start_gate.cpp
                                           ${MISSION_DIR}/start_gate_net.cpp)
 set_target_properties(${PROJECT_NAME}_start_gate
                       PROPERTIES
-                      COMPILE_FLAGS "-std=c++14 -pthread -Wall")
+                      COMPILE_FLAGS "-std=c++14 -pthread -Wall -fno-stack-protector")
 target_link_libraries(${PROJECT_NAME}_start_gate
                       ${catkin_LIBRARIES} ${boost_LIBRARIES})
 # source fiels that infomr the petri net
@@ -178,7 +178,7 @@ add_custom_command(OUTPUT ${MISSION_DIR}/start_gate_net.cpp
                    DEPENDS src/start_gate/start_gate_net.dot
                            ${PROJECT_NAME}_start_gate_dir
                            ${START_GATE_HPP}
-COMMAND   make_petri_net -dot ${START_GATE_NET_DOT} -header ${START_GATE_NET_HPP} -source ${START_GATE_NET_CPP} -types ${START_GATE_HPP} -os linux_cpp --state_graph_type dot --state_graph_output ${MISSION_DIR}/start_gate_state_graph.dot)
+COMMAND   make_petri_net -dot ${START_GATE_NET_DOT} -header ${START_GATE_NET_HPP} -source ${START_GATE_NET_CPP} -types ${START_GATE_HPP} -os linux_cpp --debug print --state_graph_type dot --state_graph_output ${MISSION_DIR}/start_gate_state_graph.dot)
 
 unset(PETRI_NET_DIR)
 unset(MISSION_DIR)

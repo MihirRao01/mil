@@ -9,9 +9,9 @@
 #include <mil_poi/POIArray.h>
 
 
-typedef double Pose;
-typedef Pose POI;
-typedef double Duration;
+typedef geometry_msgs::Pose Pose;
+typedef geometry_msgs::Point POI;
+typedef ros::Duration Duration;
 
 struct PoseDuration
 {
