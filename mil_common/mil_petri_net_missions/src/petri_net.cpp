@@ -38,6 +38,7 @@ void PetriNet::ConnectTransitionPlace(const std::string&                        
 void PetriNet::Kill(const std::string& _err_msg) const
 {
   // signal to the thread pool to kill everything
+  thread_pool_.Kill();
 }
 
 const Transition& PetriNet::GetTransition(const std::string& _transtion_name) const
@@ -79,7 +80,7 @@ void Place::_Callback(const Token _token)
   [&](ThreadSafe& _ts)->void
   {
     //MessageQueue<Token>& msg_q_ = std::dynamic_cast<MesageQueue<Token>&>(self);
-    auto msg_q = dynamic_cast<MessageQueue<Token>&>(_ts);
+    auto& msg_q = dynamic_cast<MessageQueue<Token>&>(_ts);
     msg_q.push(token);
   });
   // iterate through and call the transitions that belong to that type
@@ -118,7 +119,16 @@ Transition::Transition(PetriNet& _net) : net_(_net)
 {}
 
 void Transition::TryFire() const
-{}
+{
+  // wait on the transition semaphore
+  net_.transition_mutex_.lock();
+  // check all the input message quese for any data
+
+
+
+  net_.trnasition
+
+}
 
 void Transition::AddInEdge(const std::string& _place)
 {}
@@ -131,16 +141,21 @@ void ThreadSafe::SafeDo(boost::function<void (ThreadSafe&)> _thing)
 }
 
 
-void ThreadPool::Kill()
+void PetriNet::ThreadPool::Kill()
 {
-  SafeDo([](ThreadPool& self)->void {self.kill_ = true;});
+SafeDo([](ThreadSafe& _tf)->void
+{
+  auto& self = dynamic_cast<ThreadPool&>(_tf);
+  self.kill_ = true;
+});
 }
 
 
-void ThreadPool::SpinOnce()
+void PetriNet::ThreadPool::SpinOnce()
 {
-SafeDo([](ThreadPool& self)->void
+SafeDo([](ThreadSafe& _tf)->void
 {
+  auto& self = dynamic_cast<ThreadPool&>(_tf);
   // check the kill
   if (self.kill_ == true)
   {
@@ -163,9 +178,10 @@ SafeDo([](ThreadPool& self)->void
   {
     auto& msg = self.threads_to_start_.front();
     std::thread new_thread(msg.place_.callback_, msg.token_);
-    self.pool_.insert(std::make_pair(new_thread.id, new_thread));
+    self.pool_.insert(std::make_pair(new_thread.get_id(), std::move(new_thread)));
     self.threads_to_start_.pop();
   }
 });
+}
 
 }

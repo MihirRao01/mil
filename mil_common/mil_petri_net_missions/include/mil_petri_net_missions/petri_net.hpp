@@ -37,31 +37,30 @@ struct StartMsg
   const Token token_;
 };
 
-class ThreadPool : ThreadSafe
-{
-public:
-
-  void Kill();
-
-  void SpinOnce();
-
-private:
-  std::map<std::thread::id, std::thread> pool_;
-  // msg q to give the message of dead threads that need to be removed from the thread pool
-  std::queue<std::thread::id> threads_to_remove_;
-  // msg q to give the threads that need to be run and with what params
-  std::queue<StartMsg> threads_to_start_;
-  // bool to signal a kill
-  bool kill_ = false;
-};
-
-
 
 class Transition;
 class Place;
 
 class PetriNet
 {
+
+  class ThreadPool : ThreadSafe
+  {
+  public:
+
+    void Kill();
+
+    void SpinOnce();
+
+  private:
+    std::map<std::thread::id, std::thread> pool_;
+    // msg q to give the message of dead threads that need to be removed from the thread pool
+    std::queue<std::thread::id> threads_to_remove_;
+    // msg q to give the threads that need to be run and with what params
+    std::queue<StartMsg> threads_to_start_;
+    // bool to signal a kill
+    bool kill_ = false;
+  };
 
 public:
   // functions that are used to build the petri net, cannot be called after the net is started
@@ -119,7 +118,7 @@ private:
   Transition(PetriNet& _net);
 
   const PetriNet& net_;
-  std::map<std::string, MessageQueue<Token>&> place_type_;
+  std::map<std::string, MessageQueue<Token>&> place_out_queues_;
 
 };
 
